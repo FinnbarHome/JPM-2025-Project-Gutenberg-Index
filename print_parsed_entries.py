@@ -30,12 +30,13 @@ def main() -> None:
     # Overwrite the CSV on every run 
     with OUTPUT_FILE.open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["ebook_number", "title", "language", "indexed_month", "raw_text"])
+        writer.writerow(["ebook_number", "title", "author", "language", "indexed_month", "raw_text"])
 
         for entry in entries:
             writer.writerow([
                 entry.ebook_number,
                 entry.title,
+                entry.author,
                 entry.language,
                 entry.indexed_month,
                 entry.raw_text,

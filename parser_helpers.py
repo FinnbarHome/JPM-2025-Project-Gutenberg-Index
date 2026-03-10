@@ -45,6 +45,7 @@ class GutenbergEntry:
     """One parsed record from the index."""
     ebook_number: int
     title: str
+    author: str
     language: str
     indexed_month: str
     # Mainly used for debugging
@@ -159,8 +160,8 @@ def extract_ebook_number(entry_text: str) -> int | None:
     return ebook_number
 
 
-def extract_title(entry_text: str) -> str:
-    """Extract title, splitting from author on last ', by '."""
+def _extract_title_author_text(entry_text: str) -> str:
+    """Extract the combined title/author text before metadata begins."""
     # Split entry text into lines
     lines = entry_text.splitlines()
 
@@ -177,17 +178,19 @@ def extract_title(entry_text: str) -> str:
     # Ebook number sits at end of first line, strip it
     title_lines[0] = EBOOK_NUMBER_RE.sub("", title_lines[0]).rstrip()
 
-    # Join the multi-line title into a single string
-    cleaned_title_parts: list[str] = []
-
-    # Strip whitespace + add non-empty parts to list
+    # Join the multi-line title/author block into a single string
+    cleaned_parts: list[str] = []
     for part in title_lines:
         cleaned_part = part.strip()
         if cleaned_part:
-            cleaned_title_parts.append(cleaned_part)
+            cleaned_parts.append(cleaned_part)
 
-    # Join the parts with a space
-    full_title = " ".join(cleaned_title_parts)
+    return " ".join(cleaned_parts)
+
+
+def extract_title(entry_text: str) -> str:
+    """Extract title, splitting from author on last ', by '."""
+    full_title = _extract_title_author_text(entry_text)
 
     # Author follows the last ", by " -- keep only the title portion
     author_separator_index = full_title.rfind(", by ")
@@ -197,6 +200,17 @@ def extract_title(entry_text: str) -> str:
         return full_title[:author_separator_index].strip()
 
     return full_title.strip()
+
+
+def extract_author(entry_text: str) -> str:
+    """Extract author, using last ', by ' as the split point."""
+    full_title = _extract_title_author_text(entry_text)
+    author_separator_index = full_title.rfind(", by ")
+
+    if author_separator_index > 0:
+        return full_title[author_separator_index + len(", by "):].strip()
+
+    return ""
 
 
 def extract_language(entry_text: str) -> str:
@@ -222,6 +236,7 @@ def parse_entry(entry_text: str, month: str) -> GutenbergEntry | None:
     return GutenbergEntry(
         ebook_number=ebook_number,
         title=extract_title(entry_text),
+        author=extract_author(entry_text),
         language=extract_language(entry_text),
         indexed_month=month,
         raw_text=entry_text,
@@ -251,6 +266,7 @@ def build_dataframe(entries: list[GutenbergEntry]) -> pd.DataFrame:
         {
             "ebook_number": e.ebook_number,
             "title": e.title.strip(),
+            "author": e.author.strip(),
             "language": e.language.strip(),
             "indexed_month": e.indexed_month,
         }
