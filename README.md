@@ -11,7 +11,7 @@ plain-text index to determine:
 
 | File | Purpose |
 |---|---|
-| `q4_analysis.py` | Main script — run this |
+| `gutenberg_index_analysis.py` | Main script — run this |
 | `parser_helpers.py` | Parsing logic for the GUTINDEX format |
 | `requirements.txt` | Python dependencies |
 | `outputs/` | Generated charts, CSVs, and summary (created on first run) |
@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```
-python q4_analysis.py
+python gutenberg_index_analysis.py
 ```
 
 ## Outputs

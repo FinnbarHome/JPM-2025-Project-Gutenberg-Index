@@ -204,7 +204,11 @@ def extract_title(entry_text: str) -> str:
 
 def extract_author(entry_text: str) -> str:
     """Extract author, using last ', by ' as the split point."""
+
+    # Extract the title/author text
     full_title = _extract_title_author_text(entry_text)
+
+    # Find the index of the author separator
     author_separator_index = full_title.rfind(", by ")
 
     if author_separator_index > 0:
@@ -230,6 +234,7 @@ def extract_language(entry_text: str) -> str:
 def parse_entry(entry_text: str, month: str) -> GutenbergEntry | None:
     """Parse one candidate block. Returns None if unparseable."""
     ebook_number = extract_ebook_number(entry_text)
+    
     if ebook_number is None:
         return None
 
@@ -245,12 +250,18 @@ def parse_entry(entry_text: str, month: str) -> GutenbergEntry | None:
 
 def parse_all_entries(raw_text: str) -> list[GutenbergEntry]:
     """Parse raw GUTINDEX text into structured entry records."""
+    # Extract listings from raw text
     listings = _extract_listings(raw_text)
 
     entries: list[GutenbergEntry] = []
+
     for month, section in _split_by_month(listings):
+        # Split section into candidate entry blocks
         for block in _split_into_entries(section):
+            # Parse entry
             entry = parse_entry(block, month)
+
+            # If entry is not None, add it to list
             if entry is not None:
                 entries.append(entry)
 
