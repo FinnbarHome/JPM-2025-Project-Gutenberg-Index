@@ -114,9 +114,11 @@ def _split_into_entries(section_text: str) -> list[str]:
     """Split a month section into candidate entry blocks on blank lines."""
     candidates: list[str] = []
     block_counter = 0
+
     # Split the section into blocks on blank lines
     for block in re.split(r"\n\s*\n", section_text):
         block = block.strip()
+
         if not block:
             continue
         block_counter += 1
@@ -147,22 +149,24 @@ def extract_ebook_number(entry_text: str) -> int | None:
     """Extract the ebook number from the first line."""
     # Split entry text into lines + search for the ebook number
     ebook_number_match = EBOOK_NUMBER_RE.search(entry_text.splitlines()[0])
+
     if ebook_number_match is not None:
         ebook_number = int(ebook_number_match.group(1))
     else:
         ebook_number = None
+
     # print(f"Extracted ebook number: {ebook_number}")
     return ebook_number
 
 
 def extract_title(entry_text: str) -> str:
     """Extract title, splitting from author on last ', by '."""
+    # Split entry text into lines
     lines = entry_text.splitlines()
 
-    # Title (and author) can span multiple lines before the metadata.
-    # Collect everything up to the first bracketed metadata line.
     title_lines: list[str] = []
     for line in lines:
+        # If line is a metadata line, break the loop
         if METADATA_LINE_RE.match(line):
             break
         title_lines.append(line)
@@ -170,25 +174,39 @@ def extract_title(entry_text: str) -> str:
     if not title_lines:
         return ""
 
-    # The ebook number sits at the end of the first line -- strip it
+    # Ebook number sits at end of first line, strip it
     title_lines[0] = EBOOK_NUMBER_RE.sub("", title_lines[0]).rstrip()
 
     # Join the multi-line title into a single string
-    full = " ".join(part.strip() for part in title_lines if part.strip())
+    cleaned_title_parts: list[str] = []
+
+    # Strip whitespace + add non-empty parts to list
+    for part in title_lines:
+        cleaned_part = part.strip()
+        if cleaned_part:
+            cleaned_title_parts.append(cleaned_part)
+
+    # Join the parts with a space
+    full_title = " ".join(cleaned_title_parts)
 
     # Author follows the last ", by " -- keep only the title portion
-    sep = full.rfind(", by ")
-    if sep > 0:
-        return full[:sep].strip()
+    author_separator_index = full_title.rfind(", by ")
 
-    return full.strip()
+    if author_separator_index > 0:
+        # Return the title portion (before the author)
+        return full_title[:author_separator_index].strip()
+
+    return full_title.strip()
 
 
 def extract_language(entry_text: str) -> str:
     """Extract [Language: ...] tag, defaulting to English."""
-    match = LANGUAGE_RE.search(entry_text)
-    if match:
-        return match.group(1).strip().title()
+    # Search for the language tag
+    language_max = LANGUAGE_RE.search(entry_text)
+
+    # If language tag is found, return language else return default language
+    if language_max is not None:
+        return language_max.group(1).strip().title()
     return DEFAULT_LANGUAGE
 
 
