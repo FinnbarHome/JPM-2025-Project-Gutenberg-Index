@@ -86,20 +86,23 @@ def _split_by_month(listings_text: str) -> list[tuple[str, str]]:
 
     for line in listings_text.splitlines():
         month_header_match = MONTH_HEADER_RE.search(line)
-        if month_header_match:
+        if month_header_match is not None:
             if current_month is not None:
-                # Build tuple with current month, and all the lines 
                 print(f"Saving section for {current_month} with {len(current_lines)} lines")
+                # Build tuple with current month, and all the lines for that month
                 sections.append((current_month, "\n".join(current_lines)))
 
-            # Start accumulating lines for the new month, e.g. "Jan 2025"
+            # Group 1 is the month, Group 2 = year of month
             current_month = f"{month_header_match.group(1)} {month_header_match.group(2)}"
             print(f"Found month header: {current_month}")
+
             current_lines = []
+
+        # If line is not a month header + in a month section + add line to current lines
         elif current_month is not None:
             current_lines.append(line)
 
-    # Flush the last section
+    # Save final section
     if current_month is not None:
         print(f"Saving final section for {current_month} with {len(current_lines)} lines")
         sections.append((current_month, "\n".join(current_lines)))
@@ -110,22 +113,30 @@ def _split_by_month(listings_text: str) -> list[tuple[str, str]]:
 def _split_into_entries(section_text: str) -> list[str]:
     """Split a month section into candidate entry blocks on blank lines."""
     candidates: list[str] = []
-
+    block_counter = 0
+    # Split the section into blocks on blank lines
     for block in re.split(r"\n\s*\n", section_text):
         block = block.strip()
         if not block:
             continue
+        block_counter += 1
 
         # Skip non-entry blocks: column headers and informational notes
-        if TITLE_HEADER_RE.match(block):
+        if TITLE_HEADER_RE.match(block): # e.g. TITLE and AUTHOR
             continue
-        if NOTE_LINE_RE.match(block):
+        if NOTE_LINE_RE.match(block): # e.g. ****
             continue
 
-        # A valid entry always has an ebook number on its first line
-        if EBOOK_NUMBER_RE.search(block.splitlines()[0]):
+        first_line = block.splitlines()[0]
+        if EBOOK_NUMBER_RE.search(first_line):
+            # print(f"Appending candidate block: {first_line}")
             candidates.append(block)
 
+    print(
+        f"Non-empty blocks: {block_counter} | "
+        f"Candidate entry blocks: {len(candidates)} | "
+        f"Skipped: {block_counter - len(candidates)}"
+    )
     return candidates
 
 
