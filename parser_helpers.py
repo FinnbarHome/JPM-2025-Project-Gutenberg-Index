@@ -10,7 +10,7 @@ import pandas as pd
 # Url of the GUTINDEX file
 GUTINDEX_URL = "https://www.gutenberg.org/dirs/GUTINDEX.2025"
 
-# Marker for the start of the listings, everything above this marker is not part of the listings
+# Marker for start of the listings
 LISTINGS_MARKER = "<===LISTINGS===>"
 
 # As stated in the file header, entries without a [Language:] tag are English
@@ -25,7 +25,7 @@ MONTH_HEADER_RE = re.compile(
     r"~\s+~\s+~\s+~\s+Posting Dates.*?:\s+\d+\s+(\w{3})\s+(\d{4})"
 )
 
-# Ebook numbers appear right-aligned on the first line of each entry
+# Ebook number = 4-6 digits on the first line of each entry
 # An optional trailing 'C' marks copyrighted works
 EBOOK_NUMBER_RE = re.compile(r"\b(\d{4,6})\s*C?\s*$")
 
@@ -145,8 +145,14 @@ def _split_into_entries(section_text: str) -> list[str]:
 
 def extract_ebook_number(entry_text: str) -> int | None:
     """Extract the ebook number from the first line."""
-    match = EBOOK_NUMBER_RE.search(entry_text.splitlines()[0])
-    return int(match.group(1)) if match else None
+    # Split entry text into lines + search for the ebook number
+    ebook_number_match = EBOOK_NUMBER_RE.search(entry_text.splitlines()[0])
+    if ebook_number_match is not None:
+        ebook_number = int(ebook_number_match.group(1))
+    else:
+        ebook_number = None
+    # print(f"Extracted ebook number: {ebook_number}")
+    return ebook_number
 
 
 def extract_title(entry_text: str) -> str:
