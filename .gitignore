@@ -1,2 +1,4 @@
 __pycache__/
 outputs/
+parsed_entries.csv
+parsed_entries.txt

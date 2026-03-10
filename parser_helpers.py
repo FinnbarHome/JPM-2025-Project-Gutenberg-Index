@@ -7,38 +7,36 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-# The GUTINDEX file is a plain-text catalog published yearly.
-# It lists every ebook added or updated, grouped by month.
+# Url of the GUTINDEX file
 GUTINDEX_URL = "https://www.gutenberg.org/dirs/GUTINDEX.2025"
 
-# Everything above this marker is the file's preamble / boilerplate
+# Marker for the start of the listings, everything above this marker is not part of the listings
 LISTINGS_MARKER = "<===LISTINGS===>"
 
-# Per the file header, entries without a [Language: ...] tag are English
+# As stated in the file header, entries without a [Language:] tag are English
 DEFAULT_LANGUAGE = "English"
 
 
 # -- Regex patterns --
-#
-# The file format is loosely structured plain text, not a clean tabular format.
-# Each pattern targets one structural element of the index.
 
-# Monthly sections begin with lines like:
-#   ~ ~ ~ ~ Posting Dates for 312 Titles Posted in Jan 2025: ...
+
+#  Pattern for the monthly sections, it matches the lines like: ~ ~ ~ ~ Posting Dates for the below eBooks:  1 Mar 2026 to 8 Mar 2026 ~ ~ ~ ~
 MONTH_HEADER_RE = re.compile(
     r"~\s+~\s+~\s+~\s+Posting Dates.*?:\s+\d+\s+(\w{3})\s+(\d{4})"
 )
 
-# Ebook numbers appear right-aligned on the first line of each entry.
-# An optional trailing 'C' marks copyrighted works.
+# Ebook numbers appear right-aligned on the first line of each entry
+# An optional trailing 'C' marks copyrighted works
 EBOOK_NUMBER_RE = re.compile(r"\b(\d{4,6})\s*C?\s*$")
 
-# Metadata lines like [Language: Finnish] or [Subtitle: ...] are indented
+# Matches the lines like: [Language: Finnish]
 LANGUAGE_RE = re.compile(r"\[Language:\s*(.+?)\s*\]", re.IGNORECASE)
+# Matches the lines like: [Subtitle: ...], [Illustrator: ...] etc
 METADATA_LINE_RE = re.compile(r"^\s+\[")
 
-# Column header and **** note lines that appear between entry blocks
+# Matches the lines like: TITLE and AUTHOR
 TITLE_HEADER_RE = re.compile(r"^\s*TITLE and AUTHOR", re.IGNORECASE)
+# Matches the lines like: ****
 NOTE_LINE_RE = re.compile(r"^\s*\*{4}")
 
 
@@ -49,7 +47,7 @@ class GutenbergEntry:
     title: str
     language: str
     indexed_month: str
-    # Keeping the raw block text is useful for spot-checking the parser
+    # Mainly used for debugging
     raw_text: str
 
 
@@ -57,12 +55,13 @@ class GutenbergEntry:
 
 
 def fetch_gutindex_text(url: str = GUTINDEX_URL) -> str:
-    """Download the raw GUTINDEX file. Returns full text, BOM-stripped."""
+    """Download raw GUTINDEX file. Returns full text, Byte-Order-Mark stripped."""
     try:
-        with urllib.request.urlopen(url, timeout=30) as resp:
-            return resp.read().decode("utf-8-sig")
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"Failed to download {url}") from exc
+        with urllib.request.urlopen(url, timeout=30) as response:
+            # Byte-Order-Mark stripped, not needed here + can cause issues with parser
+            return response.read().decode("utf-8-sig")
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"Failed to download {url}") from error
 
 
 # --- Splitting raw text into entry blocks ---
@@ -70,10 +69,13 @@ def fetch_gutindex_text(url: str = GUTINDEX_URL) -> str:
 
 def _extract_listings(raw_text: str) -> str:
     """Strip the intro header, return everything after the listings marker."""
-    pos = raw_text.find(LISTINGS_MARKER)
-    if pos == -1:
+    position = raw_text.find(LISTINGS_MARKER)
+
+    if position == -1:
         raise ValueError(f"Listings marker not found: {LISTINGS_MARKER!r}")
-    return raw_text[pos + len(LISTINGS_MARKER):]
+
+    # Return everything after the listings marker
+    return raw_text[position + len(LISTINGS_MARKER):]
 
 
 def _split_by_month(listings_text: str) -> list[tuple[str, str]]:
@@ -83,21 +85,23 @@ def _split_by_month(listings_text: str) -> list[tuple[str, str]]:
     current_lines: list[str] = []
 
     for line in listings_text.splitlines():
-        match = MONTH_HEADER_RE.search(line)
-
-        if match:
-            # Flush the previous section before starting a new one
+        month_header_match = MONTH_HEADER_RE.search(line)
+        if month_header_match:
             if current_month is not None:
+                # Build tuple with current month, and all the lines 
+                print(f"Saving section for {current_month} with {len(current_lines)} lines")
                 sections.append((current_month, "\n".join(current_lines)))
 
             # Start accumulating lines for the new month, e.g. "Jan 2025"
-            current_month = f"{match.group(1)} {match.group(2)}"
+            current_month = f"{month_header_match.group(1)} {month_header_match.group(2)}"
+            print(f"Found month header: {current_month}")
             current_lines = []
         elif current_month is not None:
             current_lines.append(line)
 
     # Flush the last section
     if current_month is not None:
+        print(f"Saving final section for {current_month} with {len(current_lines)} lines")
         sections.append((current_month, "\n".join(current_lines)))
 
     return sections

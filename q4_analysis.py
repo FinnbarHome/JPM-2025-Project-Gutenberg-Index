@@ -15,7 +15,7 @@ import pandas as pd
 from parser_helpers import fetch_gutindex_text, parse_all_entries, build_dataframe
 
 
-# -- Configuration --
+# -- Configuration --   
 
 OUTPUT_DIR = Path("outputs")
 TOP_N_LANGUAGES = 15
