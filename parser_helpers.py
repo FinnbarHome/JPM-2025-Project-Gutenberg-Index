@@ -132,7 +132,7 @@ def extract_ebook_number(entry_text: str) -> int | None:
 
 
 def _extract_title_author_text(entry_text: str) -> str:
-    """Extract the combined title/author text before metadata begins."""
+    """Extract the combined title/author text before any metadata lines."""
     entry_lines = entry_text.splitlines()
 
     title_author_lines: list[str] = []
@@ -212,7 +212,7 @@ def parse_entry(entry_text: str, month_label: str) -> GutenbergEntry | None:
 
 
 def parse_all_entries(raw_index_text: str) -> list[GutenbergEntry]:
-    """Parse raw GUTINDEX text into structured entry records."""
+    """Parse raw GUTINDEX text into entry records."""
     listings_text = _extract_listings(raw_index_text)
 
     parsed_entries: list[GutenbergEntry] = []
@@ -231,7 +231,7 @@ def parse_all_entries(raw_index_text: str) -> list[GutenbergEntry]:
 
 
 def build_dataframe(entries: list[GutenbergEntry]) -> pd.DataFrame:
-    """Build a tidy DataFrame from parsed entries (excludes raw text)."""
+    """Build DataFrame from parsed entries, excludes raw text."""
     return pd.DataFrame([
         {
             "ebook_number": entry.ebook_number,

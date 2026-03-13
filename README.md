@@ -1,4 +1,4 @@
-# Project Gutenberg 2025 Index — Exploratory Analysis
+# Project Gutenberg 2025 Index - Exploratory Analysis
 
 Analyses the [GUTINDEX.2025](https://www.gutenberg.org/dirs/GUTINDEX.2025) plain-text index to find:
 
@@ -22,7 +22,7 @@ python gutenberg_index_analysis.py
 
 Creates an `outputs/` folder with:
 
-- `language_distribution.csv.png`
-- `month_distribution.csv.png`
-- `title_word_distribution.csv.png`
+- `language_distribution` - CSV + PNG
+- `month_distribution` - CSV + PNG
+- `title_word_distribution` - CSV + PNG
 - `summary.md`

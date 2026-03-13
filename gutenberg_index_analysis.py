@@ -72,10 +72,7 @@ def count_by_month(entries_dataframe: pd.DataFrame) -> pd.DataFrame:
     return month_counts.reset_index(drop=True)
 
 
-def count_title_words(
-    title_series: pd.Series,
-    top_word_count: int = TOP_TITLE_WORD_COUNT,
-) -> pd.DataFrame:
+def count_title_words(title_series: pd.Series, top_word_count: int = TOP_TITLE_WORD_COUNT) -> pd.DataFrame:
     """Count the most common non-stop-words across all titles."""
     word_frequency_counter: Counter[str] = Counter()
 
@@ -131,7 +128,7 @@ def save_month_chart(month_counts: pd.DataFrame, output_path: Path) -> None:
     chart_axes.set_xticklabels(month_counts["month"], rotation=45, ha="right")
     chart_axes.set_xlabel("Month")
     chart_axes.set_ylabel("Number of texts")
-    chart_axes.set_title("Texts Indexed by Month — 2025 Gutenberg Index")
+    chart_axes.set_title("Texts Indexed by Month - 2025 Gutenberg Index")
 
     for bar_index, count_value in enumerate(month_counts["count"]):
         chart_axes.text(bar_index, count_value + 2, str(count_value), ha="center", fontsize=9)
@@ -141,11 +138,7 @@ def save_month_chart(month_counts: pd.DataFrame, output_path: Path) -> None:
     plt.close(chart_figure)
 
 
-def save_title_word_chart(
-    title_word_counts: pd.DataFrame,
-    output_path: Path,
-    top_chart_word_count: int = 20,
-) -> None:
+def save_title_word_chart(title_word_counts: pd.DataFrame, output_path: Path, top_chart_word_count: int = 20) -> None:
     """Save horizontal bar chart of top title words."""
     top_title_word_counts = title_word_counts.head(top_chart_word_count).iloc[::-1]
 
@@ -185,7 +178,7 @@ def print_validation(entries_dataframe: pd.DataFrame) -> None:
     print(f"  Unique languages:       {entries_dataframe['language'].nunique():>6}")
     print(f"  Unique months:          {entries_dataframe['indexed_month'].nunique():>6}")
 
-    # eyeball check — sample rows to verify parsing looks right
+    # eyeball check, sample rows to verify parsing looks right
     print()
     print("  Sample entries:")
     for _, sample_row in entries_dataframe.head(5).iterrows():
@@ -197,12 +190,8 @@ def print_validation(entries_dataframe: pd.DataFrame) -> None:
     print()
 
 
-def print_results(
-    language_counts: pd.DataFrame,
-    month_counts: pd.DataFrame,
-    title_word_counts: pd.DataFrame,
-) -> None:
-    """Print key analysis results to the console."""
+def print_results(language_counts: pd.DataFrame, month_counts: pd.DataFrame, title_word_counts: pd.DataFrame) -> None:
+    """Print key analysis results."""
     print(f"{SECTION_SEPARATOR}")
     print("  Language Distribution (top 10)")
     print(SECTION_SEPARATOR)
@@ -226,12 +215,7 @@ def print_results(
 # --- Summary file ---
 
 
-def write_summary(
-    entries_dataframe: pd.DataFrame,
-    language_counts: pd.DataFrame,
-    month_counts: pd.DataFrame,
-    title_word_counts: pd.DataFrame,
-) -> None:
+def write_summary(entries_dataframe: pd.DataFrame, language_counts: pd.DataFrame, month_counts: pd.DataFrame, title_word_counts: pd.DataFrame) -> None:
     """Write a markdown summary to outputs/summary.md."""
     language_table_rows = "\n".join(
         f"| {language_row['language']} | {language_row['count']} |"
@@ -272,7 +256,6 @@ def write_summary(
 | Word | Count |
 |---|---:|
 {title_word_table_rows}
-
 
 """
     (OUTPUT_DIRECTORY / "summary.md").write_text(summary_markdown, encoding="utf-8")
