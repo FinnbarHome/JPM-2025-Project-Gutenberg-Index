@@ -54,7 +54,12 @@ def _month_sort_key(month_label: str) -> tuple[int, int]:
     """Sort key for 'Mon YYYY' labels in calendar order."""
     # sort by year first, then month
     month_label_parts = month_label.split()
-    year_number = int(month_label_parts[1]) if len(month_label_parts) > 1 else 0
+
+    if len(month_label_parts) > 1:
+        year_number = int(month_label_parts[1])
+    else:
+        year_number = 0
+
     month_number = MONTH_ORDER.get(month_label_parts[0], 0)
     return (year_number, month_number)
 
@@ -80,13 +85,10 @@ def count_title_words(title_series: pd.Series, top_word_count: int = TOP_TITLE_W
         # lowercase + extract alpha tokens only
         extracted_words = TITLE_WORD_PATTERN.findall(title_text.lower())
 
-        # drop stop words and very short words (abbreviations / noise)
-        meaningful_words = [
-            word
-            for word in extracted_words
-            if word not in STOP_WORDS and len(word) >= MINIMUM_TITLE_WORD_LENGTH
-        ]
-        word_frequency_counter.update(meaningful_words)
+        # drop stop words and very short words
+        for word in extracted_words:
+            if word not in STOP_WORDS and len(word) >= MINIMUM_TITLE_WORD_LENGTH:
+                word_frequency_counter[word] += 1
 
     return pd.DataFrame(
         word_frequency_counter.most_common(top_word_count),
@@ -163,6 +165,11 @@ def save_title_word_chart(title_word_counts: pd.DataFrame, output_path: Path, to
 def print_validation(entries_dataframe: pd.DataFrame) -> None:
     """Print parser coverage metrics."""
     total_entry_count = len(entries_dataframe)
+
+    if total_entry_count == 0:
+        print("No entries parsed.")
+        return
+
     non_english_count = int((entries_dataframe["language"] != "English").sum())
     empty_title_count = int((entries_dataframe["title"] == "").sum())
 
@@ -217,18 +224,20 @@ def print_results(language_counts: pd.DataFrame, month_counts: pd.DataFrame, tit
 
 def write_summary(entries_dataframe: pd.DataFrame, language_counts: pd.DataFrame, month_counts: pd.DataFrame, title_word_counts: pd.DataFrame) -> None:
     """Write a markdown summary to outputs/summary.md."""
-    language_table_rows = "\n".join(
-        f"| {language_row['language']} | {language_row['count']} |"
-        for _, language_row in language_counts.head(10).iterrows()
-    )
-    month_table_rows = "\n".join(
-        f"| {month_row['month']} | {month_row['count']} |"
-        for _, month_row in month_counts.iterrows()
-    )
-    title_word_table_rows = "\n".join(
-        f"| {word_row['word']} | {word_row['count']} |"
-        for _, word_row in title_word_counts.head(15).iterrows()
-    )
+    language_table_lines = []
+    for _, language_row in language_counts.head(10).iterrows():
+        language_table_lines.append(f"| {language_row['language']} | {language_row['count']} |")
+    language_table_rows = "\n".join(language_table_lines)
+
+    month_table_lines = []
+    for _, month_row in month_counts.iterrows():
+        month_table_lines.append(f"| {month_row['month']} | {month_row['count']} |")
+    month_table_rows = "\n".join(month_table_lines)
+
+    title_word_table_lines = []
+    for _, word_row in title_word_counts.head(15).iterrows():
+        title_word_table_lines.append(f"| {word_row['word']} | {word_row['count']} |")
+    title_word_table_rows = "\n".join(title_word_table_lines)
 
     summary_markdown = f"""\
 # Analysis Summary: 2025 Project Gutenberg Index

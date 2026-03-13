@@ -50,7 +50,8 @@ class GutenbergEntry:
 def fetch_gutindex_text(url: str = GUTINDEX_URL) -> str:
     """Download raw GUTINDEX file. Returns full text, BOM stripped."""
     try:
-        with urllib.request.urlopen(url, timeout=30) as response:
+        request = urllib.request.Request(url, headers={"User-Agent": "PG-Index-Analysis/1.0"})
+        with urllib.request.urlopen(request, timeout=30) as response:
             # utf-8-sig strips BOM which can break parsing
             return response.read().decode("utf-8-sig")
     except urllib.error.URLError as url_error:
@@ -158,28 +159,19 @@ def _extract_title_author_text(entry_text: str) -> str:
     return " ".join(cleaned_parts)
 
 
-def extract_title(entry_text: str) -> str:
-    """Extract title, splitting from author on last ', by '."""
+def extract_title_and_author(entry_text: str) -> tuple[str, str]:
+    """Split title from author. Returns (title, author)."""
     full_title_author = _extract_title_author_text(entry_text)
 
     # split on last ", by " to separate title from author
     author_split_position = full_title_author.rfind(", by ")
 
     if author_split_position > 0:
-        return full_title_author[:author_split_position].strip()
+        title = full_title_author[:author_split_position].strip()
+        author = full_title_author[author_split_position + len(", by "):].strip()
+        return (title, author)
 
-    return full_title_author.strip()
-
-
-def extract_author(entry_text: str) -> str:
-    """Extract author, using last ', by ' as the split point."""
-    full_title_author = _extract_title_author_text(entry_text)
-    author_split_position = full_title_author.rfind(", by ")
-
-    if author_split_position > 0:
-        return full_title_author[author_split_position + len(", by "):].strip()
-
-    return ""
+    return (full_title_author.strip(), "")
 
 
 def extract_language(entry_text: str) -> str:
@@ -201,10 +193,12 @@ def parse_entry(entry_text: str, month_label: str) -> GutenbergEntry | None:
     if ebook_number is None:
         return None
 
+    title, author = extract_title_and_author(entry_text)
+
     return GutenbergEntry(
         ebook_number=ebook_number,
-        title=extract_title(entry_text),
-        author=extract_author(entry_text),
+        title=title,
+        author=author,
         language=extract_language(entry_text),
         indexed_month=month_label,
         raw_text=entry_text,
@@ -232,13 +226,14 @@ def parse_all_entries(raw_index_text: str) -> list[GutenbergEntry]:
 
 def build_dataframe(entries: list[GutenbergEntry]) -> pd.DataFrame:
     """Build DataFrame from parsed entries, excludes raw text."""
-    return pd.DataFrame([
-        {
+    entry_records = []
+    for entry in entries:
+        entry_records.append({
             "ebook_number": entry.ebook_number,
             "title": entry.title.strip(),
             "author": entry.author.strip(),
             "language": entry.language.strip(),
             "indexed_month": entry.indexed_month,
-        }
-        for entry in entries
-    ])
+        })
+
+    return pd.DataFrame(entry_records)
