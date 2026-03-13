@@ -273,7 +273,8 @@ def write_summary(entries_dataframe: pd.DataFrame, language_counts: pd.DataFrame
 
 
 def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     OUTPUT_DIRECTORY.mkdir(exist_ok=True)
 
     print("Fetching GUTINDEX.2025 ...")

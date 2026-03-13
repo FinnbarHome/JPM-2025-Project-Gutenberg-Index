@@ -15,7 +15,8 @@ OUTPUT_CSV_PATH = Path("parsed_entries.csv")
 
 
 def main() -> None:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     print("Fetching GUTINDEX.2025 ...")
     raw_index_text = fetch_gutindex_text()
