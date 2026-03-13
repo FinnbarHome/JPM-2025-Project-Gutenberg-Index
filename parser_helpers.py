@@ -14,7 +14,7 @@ LISTINGS_MARKER = "<===LISTINGS===>"
 DEFAULT_LANGUAGE = "English"
 
 
-# -- Regex patterns --
+# --- Regex patterns ---
 
 # monthly section headers, e.g. ~ ~ ~ ~ Posting Dates ... ~ ~ ~ ~
 MONTH_HEADER_RE = re.compile(

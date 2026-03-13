@@ -1,8 +1,7 @@
 """
 Exploratory analysis of the 2025 Project Gutenberg index.
 
-Usage:
-    python gutenberg_index_analysis.py
+Usage: python gutenberg_index_analysis.py
 """
 
 import re
@@ -17,11 +16,11 @@ from nltk.corpus import stopwords
 
 from parser_helpers import build_dataframe, fetch_gutindex_text, parse_all_entries
 
-# download stopwords corpus if not already present
+# download stopwords corpus
 nltk.download("stopwords", quiet=True)
 
 
-# -- Configuration --
+# --- Configuration ---
 
 OUTPUT_DIRECTORY = Path("outputs")
 TOP_LANGUAGE_COUNT = 15
@@ -178,7 +177,7 @@ def print_validation(entries_dataframe: pd.DataFrame) -> None:
     print(SECTION_SEPARATOR)
     print(f"  Total entries:          {total_entry_count:>6,}")
     print(
-        f"  Explicit language tags: {non_english_count:>6,}  "
+        f"  Non-English entries:    {non_english_count:>6,}  "
         f"({non_english_count / total_entry_count * 100:.1f}%)"
     )
     print(f"  Empty titles:           {empty_title_count:>6,}")
@@ -244,9 +243,9 @@ def write_summary(entries_dataframe: pd.DataFrame, language_counts: pd.DataFrame
 
 ## Dataset
 
-- **Total entries parsed:** {len(entries_dataframe):,}
-- **Unique languages:** {entries_dataframe['language'].nunique()}
-- **Unique months:** {entries_dataframe['indexed_month'].nunique()}
+- Total entries parsed: {len(entries_dataframe):,}
+- Unique languages: {entries_dataframe['language'].nunique()}
+- Unique months: {entries_dataframe['indexed_month'].nunique()}
 
 ## Top 10 Languages
 
@@ -298,7 +297,7 @@ def main() -> None:
     month_counts.to_csv(OUTPUT_DIRECTORY / "month_distribution.csv", index=False)
     save_month_chart(month_counts, OUTPUT_DIRECTORY / "month_distribution.png")
 
-    # most common non-stop-words in titles (stretch goal)
+    # most common non-stop-words in titles
     title_word_counts = count_title_words(entries_dataframe["title"])
     title_word_counts.to_csv(OUTPUT_DIRECTORY / "title_word_distribution.csv", index=False)
     save_title_word_chart(title_word_counts, OUTPUT_DIRECTORY / "title_word_distribution.png")

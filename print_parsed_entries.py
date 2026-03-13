@@ -1,8 +1,7 @@
 """
 Dump all parsed entries to a CSV for inspection/debugging.
 
-Usage:
-    python print_parsed_entries.py
+Usage: python print_parsed_entries.py
 """
 
 import csv
